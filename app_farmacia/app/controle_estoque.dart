@@ -1,25 +1,28 @@
 import 'package:flutter/material.dart';
 import 'tela_inicial.dart';
-import 'adicionar_medicamentos.dart';
+import 'adicionar_medicamento.dart';
 import 'listar_medicamentos.dart';
 
 void main() {
-  runApp(ControleEstoque());
+  runApp(const ControleEstoqueApp());
 }
 
-class ControleEstoque extends StatelessWidget {
+class ControleEstoqueApp extends StatelessWidget {
+  const ControleEstoqueApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false, 
       title: 'Controle de Estoque',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
       initialRoute: '/',
       routes: {
-        '/': (context) => TelaInicial(),
-        '/adicionar': (context) => TelaAdicionarMedicamento(),
-        '/listar': (context) => TelaListarMedicamentos(),
+        '/': (context) => const TelaInicial(),
+        '/adicionar': (context) => AdicionarMedicamento(),
+        '/listar': (context) => const ListarMedicamentos(),
       },
     );
   }
