@@ -1,55 +1,61 @@
 import 'package:flutter/material.dart';
 
-class AdicionarMedicamento extends StatelessWidget {
-  final _chaveFormulario = GlobalKey<FormState>();
+class AdicionarMedicamento extends StatefulWidget {
+  @override
+  _AdicionarMedicamentoState createState() => _AdicionarMedicamentoState();
+}
+
+class _AdicionarMedicamentoState extends State<AdicionarMedicamento> {
+  final _formKey = GlobalKey<FormState>();
+  bool _isMedicamentoControlado = false;
+
+  Widget _buildTextField(String label,
+      {TextInputType keyboardType = TextInputType.text}) {
+    return TextFormField(
+      decoration: InputDecoration(labelText: label),
+      keyboardType: keyboardType,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Adicionar Medicamento'),
-      ),
+      appBar: AppBar(title: const Text('Adicionar Medicamento')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
-          key: _chaveFormulario,
+          key: _formKey,
           child: Column(
             children: [
-              TextFormField(
-                decoration: InputDecoration(labelText: 'Nome'),
-              ),
-              TextFormField(
-                decoration: InputDecoration(labelText: 'Laboratório'),
-              ),
-              TextFormField(
-                decoration: InputDecoration(labelText: 'Data de Fabricação (YYYY-MM-DD)'),
-              ),
-              TextFormField(
-                decoration: InputDecoration(labelText: 'Data de Validade (YYYY-MM-DD)'),
-              ),
-              TextFormField(
-                decoration: InputDecoration(labelText: 'Lote'),
-              ),
-              TextFormField(
-                decoration: InputDecoration(labelText: 'Quantidade'),
-                keyboardType: TextInputType.number,
-              ),
+              _buildTextField('Nome'),
+              _buildTextField('Laboratório'),
+              _buildTextField('Data de Fabricação (YYYY-MM-DD)'),
+              _buildTextField('Data de Validade (YYYY-MM-DD)'),
+              _buildTextField('Lote'),
+              _buildTextField('Quantidade', keyboardType: TextInputType.number),
               Row(
                 children: [
                   Checkbox(
-                    value: false,
-                    onChanged: (valor) {},
+                    value: _isMedicamentoControlado,
+                    onChanged: (bool? newValue) {
+                      setState(() {
+                        _isMedicamentoControlado = newValue ?? false;
+                      });
+                    },
                   ),
-                  Text('Medicamento Controlado')
+                  const Text('Medicamento Controlado'),
                 ],
               ),
-              SizedBox(height: 20),
+
+              const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () {
-                  Navigator.pop(context);
+                  if (_formKey.currentState!.validate()) {
+                    Navigator.pop(context);
+                  }
                 },
-                child: Text('Salvar'),
-              )
+                child: const Text('Salvar'),
+              ),
             ],
           ),
         ),
