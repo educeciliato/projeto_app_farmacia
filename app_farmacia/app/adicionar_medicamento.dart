@@ -28,6 +28,9 @@ class _AdicionarMedicamentoState extends State<AdicionarMedicamento> {
           child: Column(
             children: [
               _buildTextField('Nome'),
+              _buildTextField('Tipo(Comprimido, Xarope...)'),
+              _buildTextField('Dose (mg)'),
+              _buildTextField('Descrição'),
               _buildTextField('Laboratório'),
               _buildTextField('Data de Fabricação (YYYY-MM-DD)'),
               _buildTextField('Data de Validade (YYYY-MM-DD)'),
@@ -46,7 +49,6 @@ class _AdicionarMedicamentoState extends State<AdicionarMedicamento> {
                   const Text('Medicamento Controlado'),
                 ],
               ),
-
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () {
