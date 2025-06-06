@@ -1,6 +1,6 @@
-import 'package:aula2905/controle_estoque.dart';
 import 'package:flutter/material.dart';
 import 'botao.dart';
+import 'controle_estoque.dart';
 
 class RemoverMedicamentos extends StatefulWidget {
   const RemoverMedicamentos({super.key});
