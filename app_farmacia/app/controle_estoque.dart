@@ -1,11 +1,19 @@
+// main.dart
 import 'package:flutter/material.dart';
-import 'tela_inicial.dart';
-import 'adicionar_medicamento.dart';
-import 'listar_medicamentos.dart';
-import 'remover_medicamentos.dart';
+import 'package:provider/provider.dart';
+import 'provider/medicamento_provider.dart';
+import 'telas/adicionar_medicamento.dart';
+import 'telas/listar_medicamentos.dart';
+import 'telas/remover_medicamentos.dart';
+import 'telas/tela_inicial.dart';
 
 void main() {
-  runApp(const ControleEstoqueApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => MedicamentoProvider(),
+      child: const ControleEstoqueApp(),
+    ),
+  );
 }
 
 class ControleEstoqueApp extends StatelessWidget {
@@ -29,39 +37,3 @@ class ControleEstoqueApp extends StatelessWidget {
     );
   }
 }
-
-List<Map<String, String>> medicamentos = [
-  {
-    'nome': 'Paracetamol',
-    'dose': '500mg',
-    'tipo': 'Comprimido',
-    'descricao': 'Analgésico e antitérmico',
-    'laboratorio': 'EMS',
-    'Data de Fabricacao': '2025/04/22',
-    'Data de Validade': '2027/05/07',
-    'lote': 'PAR001',
-    'quantidade': '150',
-  },
-  {
-    'nome': 'Citrato de Sidenafila',
-    'dose': '50mg',
-    'tipo': 'Comprimido',
-    'descricao': 'Estimulante ( ͡° ͜ʖ ͡°)',
-    'laboratorio': 'Medley',
-    'Data de Fabricacao': '2025/04/22',
-    'Data de Validade': '2027/05/07',
-    'lote': 'IBU002',
-    'quantidade': '85',
-  },
-  {
-    'nome': 'Dipirona',
-    'dose': '500mg',
-    'tipo': 'Comprimido',
-    'descricao': 'Analgésico e antitérmico',
-    'laboratorio': 'Sanofi',
-    'Data de Fabricacao': '2025/04/22',
-    'Data de Validade': '2027/05/07',
-    'lote': 'DIP007',
-    'quantidade': '175',
-  },
-];
