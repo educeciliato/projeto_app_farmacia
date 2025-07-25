@@ -1,12 +1,20 @@
+import 'package:app_farmacia/main.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sqflite/sqflite.dart';
 import 'provider/medicamento_provider.dart';
 import 'telas/adicionar_medicamento.dart';
 import 'telas/listar_medicamentos.dart';
 import 'telas/remover_medicamentos.dart';
 import 'telas/tela_inicial.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:sqflite/sqflite.dart'; // Isso é necessário para o "databaseFactory"
 
 void main() {
+  // Suporte para SQLite FFI em ambientes desktop
+  sqfliteFfiInit();
+  databaseFactory = databaseFactoryFfi;
+
   runApp(
     ChangeNotifierProvider(
       create: (context) => MedicamentoProvider(),
