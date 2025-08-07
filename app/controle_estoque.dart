@@ -65,7 +65,7 @@ class ControleEstoqueApp extends StatelessWidget {
         '/sincronizacao': (context) => const Sincronizacao(),
         '/distribuidoras': (context) => const GerenciarDistribuidoras(),
         '/fornecedores': (context) => const FornecedoresMedicamentos(),
-        '/produtos': (context) => const ProdutoDiverso(),
+        '/produtos': (context) => const ProdutosDiversos()
       },
     );
   }
