@@ -1,7 +1,5 @@
-import 'package:app_farmacia/main.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sqflite/sqflite.dart';
 import 'provider/medicamento_provider.dart';
 import 'serivces/notification_service.dart';
 import 'telas/adicionar_medicamento.dart';
@@ -16,9 +14,8 @@ import 'telas/sincronizacao.dart';
 import 'telas/gerenciar_distribuidoras.dart';
 import 'telas/fornecedores_medicamentos.dart';
 import 'telas/produtos_diversos.dart';
-import 'services/notification_service.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
-import 'package:sqflite/sqflite.dart'; // Isso é necessário para o "databaseFactory"
+import 'package:sqflite/sqflite.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -68,7 +65,7 @@ class ControleEstoqueApp extends StatelessWidget {
         '/sincronizacao': (context) => const Sincronizacao(),
         '/distribuidoras': (context) => const GerenciarDistribuidoras(),
         '/fornecedores': (context) => const FornecedoresMedicamentos(),
-        '/produtos': (context) => const ProdutosDiversos(),
+        '/produtos': (context) => const ProdutoDiverso(),
       },
     );
   }
