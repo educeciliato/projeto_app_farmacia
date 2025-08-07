@@ -143,4 +143,4 @@ Tecnologias e Dependências Utilizadas:
 - intl: Formatação de datas
 - uuid: Geração de IDs únicos
 
-Resultado Final: **30/26 pontos** 
+Resultado Final: 30/26 pontos 
