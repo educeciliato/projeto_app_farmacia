@@ -10,9 +10,17 @@ class NotificationService {
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
+    const DarwinInitializationSettings initializationSettingsIOS =
+        DarwinInitializationSettings(
+      requestAlertPermission: true,
+      requestBadgePermission: true,
+      requestSoundPermission: true,
+    );
+
     const InitializationSettings initializationSettings =
         InitializationSettings(
       android: initializationSettingsAndroid,
+      iOS: initializationSettingsIOS,
     );
 
     await _notifications.initialize(
@@ -42,8 +50,15 @@ class NotificationService {
       icon: '@mipmap/ic_launcher',
     );
 
-    const NotificationDetails platformChannelSpecifics =
-        NotificationDetails(android: androidPlatformChannelSpecifics);
+    const DarwinNotificationDetails iosPlatformChannelSpecifics =
+        DarwinNotificationDetails(
+      categoryIdentifier: 'medicamentos_vencimento',
+    );
+
+    const NotificationDetails platformChannelSpecifics = NotificationDetails(
+      android: androidPlatformChannelSpecifics,
+      iOS: iosPlatformChannelSpecifics,
+    );
 
     String titulo = 'Atenção: Medicamentos próximos ao vencimento';
     String corpo = medicamentos.length == 1
@@ -74,8 +89,15 @@ class NotificationService {
       icon: '@mipmap/ic_launcher',
     );
 
-    const NotificationDetails platformChannelSpecifics =
-        NotificationDetails(android: androidPlatformChannelSpecifics);
+    const DarwinNotificationDetails iosPlatformChannelSpecifics =
+        DarwinNotificationDetails(
+      categoryIdentifier: 'estoque_baixo',
+    );
+
+    const NotificationDetails platformChannelSpecifics = NotificationDetails(
+      android: androidPlatformChannelSpecifics,
+      iOS: iosPlatformChannelSpecifics,
+    );
 
     String titulo = 'Alerta: Estoque baixo';
     String corpo = medicamentos.length == 1
@@ -106,8 +128,15 @@ class NotificationService {
       icon: '@mipmap/ic_launcher',
     );
 
-    const NotificationDetails platformChannelSpecifics =
-        NotificationDetails(android: androidPlatformChannelSpecifics);
+    const DarwinNotificationDetails iosPlatformChannelSpecifics =
+        DarwinNotificationDetails(
+      categoryIdentifier: 'medicamentos_vencidos',
+    );
+
+    const NotificationDetails platformChannelSpecifics = NotificationDetails(
+      android: androidPlatformChannelSpecifics,
+      iOS: iosPlatformChannelSpecifics,
+    );
 
     String titulo = 'URGENTE: Medicamentos vencidos';
     String corpo = medicamentos.length == 1
@@ -136,8 +165,15 @@ class NotificationService {
       icon: '@mipmap/ic_launcher',
     );
 
-    const NotificationDetails platformChannelSpecifics =
-        NotificationDetails(android: androidPlatformChannelSpecifics);
+    const DarwinNotificationDetails iosPlatformChannelSpecifics =
+        DarwinNotificationDetails(
+      categoryIdentifier: 'sincronizacao',
+    );
+
+    const NotificationDetails platformChannelSpecifics = NotificationDetails(
+      android: androidPlatformChannelSpecifics,
+      iOS: iosPlatformChannelSpecifics,
+    );
 
     await _notifications.show(
       3,
@@ -160,8 +196,15 @@ class NotificationService {
       icon: '@mipmap/ic_launcher',
     );
 
-    const NotificationDetails platformChannelSpecifics =
-        NotificationDetails(android: androidPlatformChannelSpecifics);
+    const DarwinNotificationDetails iosPlatformChannelSpecifics =
+        DarwinNotificationDetails(
+      categoryIdentifier: 'verificacao_estoque',
+    );
+
+    const NotificationDetails platformChannelSpecifics = NotificationDetails(
+      android: androidPlatformChannelSpecifics,
+      iOS: iosPlatformChannelSpecifics,
+    );
 
     await _notifications.periodicallyShow(
       4,
@@ -189,7 +232,7 @@ class NotificationService {
         AndroidFlutterLocalNotificationsPlugin>();
 
     if (androidPlugin != null) {
-      final granted = await androidPlugin.requestPermission();
+      final granted = await androidPlugin.requestNotificationsPermission();
       return granted ?? false;
     }
 
