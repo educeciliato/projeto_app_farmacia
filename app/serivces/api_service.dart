@@ -26,20 +26,23 @@ class ApiService {
 
         // Converte dados da API em formato de medicamentos
         return data.take(10).map((item) {
+          final id = item['id'] as int;
+          final userId = item['userId'] as int;
+          final title = item['title'] as String? ?? '';
+          final body = item['body'] as String? ?? '';
+
           return {
-            'id': 'API_${item['id']}',
-            'nome': _gerarNomeMedicamento(item['title']),
-            'tipo': _gerarTipoMedicamento(item['id']),
-            'doseMg': _gerarDosagem(item['id']),
-            'descricao': item['body']?.toString().substring(0, 50) ?? '',
-            'laboratorio': _gerarLaboratorio(item['userId']),
-            'dataFabricacao':
-                DateTime.now().subtract(Duration(days: item['id'] * 10)),
-            'dataValidade':
-                DateTime.now().add(Duration(days: 365 + item['id'] * 30)),
-            'lote': 'API_LOTE_${item['id']}',
-            'quantidade': 50 + (item['id'] % 100),
-            'isMedicamentoControlado': item['id'] % 5 == 0,
+            'id': 'API_$id',
+            'nome': _gerarNomeMedicamento(title),
+            'tipo': _gerarTipoMedicamento(id),
+            'doseMg': _gerarDosagem(id),
+            'descricao': body.length > 50 ? body.substring(0, 50) : body,
+            'laboratorio': _gerarLaboratorio(userId),
+            'dataFabricacao': DateTime.now().subtract(Duration(days: id * 10)),
+            'dataValidade': DateTime.now().add(Duration(days: 365 + id * 30)),
+            'lote': 'API_LOTE_$id',
+            'quantidade': 50 + (id % 100),
+            'isMedicamentoControlado': id % 5 == 0,
           };
         }).toList();
       }
@@ -63,7 +66,8 @@ class ApiService {
           final index = int.tryParse(id.replaceAll(RegExp(r'[^0-9]'), '')) ?? 1;
           final item = data.firstWhere((post) => post['id'] == index,
               orElse: () => {'id': 1});
-          precos[id] = 10.0 + (item['id'] % 50).toDouble();
+          final itemId = item['id'] as int;
+          precos[id] = 10.0 + (itemId % 50).toDouble();
         }
 
         return precos;
