@@ -1,41 +1,31 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:intl/intl.dart';
-import '../dao/fornecedor_medicamento_dao.dart';
-import '../dao/distribuidora_dao.dart';
-import '../dao/medicamento_dao.dart';
-import '../model/fornecedor_medicamento.dart';
-import '../model/distribuidora.dart';
-import '../model/medicamento.dart';
-import '../provider/medicamento_provider.dart';
+import '../dao/produto_diverso_dao.dart';
+import '../model/produto_diverso.dart';
 
-class FornecedoresMedicamentos extends StatefulWidget {
-  const FornecedoresMedicamentos({super.key});
+class ProdutosDiversos extends StatefulWidget {
+  const ProdutosDiversos({super.key});
 
   @override
-  State<FornecedoresMedicamentos> createState() =>
-      _FornecedoresMedicamentosState();
+  State<ProdutosDiversos> createState() => _ProdutosDiversosState();
 }
 
-class _FornecedoresMedicamentosState extends State<FornecedoresMedicamentos> {
-  final FornecedorMedicamentoDAO _fornecedorDAO = FornecedorMedicamentoDAO();
-  final DistribuidoraDAO _distribuidoraDAO = DistribuidoraDAO();
-  final MedicamentoDAO _medicamentoDAO = MedicamentoDAO();
-
+class _ProdutosDiversosState extends State<ProdutosDiversos> {
+  final ProdutoDiversoDAO _produtoDAO = ProdutoDiversoDAO();
   final _formKey = GlobalKey<FormState>();
+  
+  final _nomeController = TextEditingController();
+  final _descricaoController = TextEditingController();
+  final _categoriaController = TextEditingController();
   final _precoController = TextEditingController();
-
-  List<FornecedorMedicamento> _fornecedores = [];
-  List<Distribuidora> _distribuidoras = [];
-  List<Medicamento> _medicamentos = [];
-
-  Distribuidora? _distribuidoraSelecionada;
-  Medicamento? _medicamentoSelecionado;
-  DateTime _dataUltimaCompra = DateTime.now();
-
+  final _quantidadeController = TextEditingController();
+  
+  List<ProdutoDiverso> _produtos = [];
+  List<String> _categorias = [];
+  String? _categoriaSelecionada;
+  String _filtroTexto = '';
+  String _filtroCategoria = 'Todas';
   bool _isLoading = false;
   bool _isAdding = false;
-  String _filtroTexto = '';
 
   @override
   void initState() {
@@ -45,7 +35,11 @@ class _FornecedoresMedicamentosState extends State<FornecedoresMedicamentos> {
 
   @override
   void dispose() {
+    _nomeController.dispose();
+    _descricaoController.dispose();
+    _categoriaController.dispose();
     _precoController.dispose();
+    _quantidadeController.dispose();
     super.dispose();
   }
 
@@ -55,14 +49,12 @@ class _FornecedoresMedicamentosState extends State<FornecedoresMedicamentos> {
     });
 
     try {
-      final fornecedores = await _fornecedorDAO.getAllFornecedorMedicamentos();
-      final distribuidoras = await _distribuidoraDAO.getAllDistribuidoras();
-      final medicamentos = await _medicamentoDAO.getAllMedicamentos();
-
+      final produtos = await _produtoDAO.getAllProdutosDiversos();
+      final categorias = await _produtoDAO.getCategorias();
+      
       setState(() {
-        _fornecedores = fornecedores;
-        _distribuidoras = distribuidoras;
-        _medicamentos = medicamentos;
+        _produtos = produtos;
+        _categorias = ['Todas', ...categorias];
       });
     } catch (e) {
       _mostrarErro('Erro ao carregar dados: $e');
@@ -73,43 +65,28 @@ class _FornecedoresMedicamentosState extends State<FornecedoresMedicamentos> {
     }
   }
 
-  Future<void> _adicionarFornecedor() async {
+  Future<void> _adicionarProduto() async {
     if (!_formKey.currentState!.validate()) return;
-
-    if (_distribuidoraSelecionada == null || _medicamentoSelecionado == null) {
-      _mostrarErro('Selecione uma distribuidora e um medicamento');
-      return;
-    }
-
-    // Verificar se já existe o relacionamento
-    final existeRelacionamento = await _fornecedorDAO.existeRelacionamento(
-      _distribuidoraSelecionada!.id!,
-      _medicamentoSelecionado!.id,
-    );
-
-    if (existeRelacionamento) {
-      _mostrarErro('Este relacionamento já existe');
-      return;
-    }
 
     setState(() {
       _isAdding = true;
     });
 
     try {
-      final novoFornecedor = FornecedorMedicamento(
-        distribuidoraId: _distribuidoraSelecionada!.id!,
-        medicamentoId: _medicamentoSelecionado!.id,
+      final novoProduto = ProdutoDiverso(
+        nome: _nomeController.text,
+        descricao: _descricaoController.text.isEmpty ? null : _descricaoController.text,
+        categoria: _categoriaSelecionada ?? _categoriaController.text,
         preco: double.parse(_precoController.text),
-        dataUltimaCompra: _dataUltimaCompra,
+        quantidadeEstoque: int.parse(_quantidadeController.text),
       );
 
-      await _fornecedorDAO.insertFornecedorMedicamento(novoFornecedor);
+      await _produtoDAO.insertProdutoDiverso(novoProduto);
       await _carregarDados();
       _limparFormulario();
-      _mostrarSucesso('Relacionamento criado com sucesso!');
+      _mostrarSucesso('Produto adicionado com sucesso!');
     } catch (e) {
-      _mostrarErro('Erro ao criar relacionamento: $e');
+      _mostrarErro('Erro ao adicionar produto: $e');
     } finally {
       setState(() {
         _isAdding = false;
@@ -118,18 +95,20 @@ class _FornecedoresMedicamentosState extends State<FornecedoresMedicamentos> {
   }
 
   void _limparFormulario() {
-    _distribuidoraSelecionada = null;
-    _medicamentoSelecionado = null;
+    _nomeController.clear();
+    _descricaoController.clear();
+    _categoriaController.clear();
     _precoController.clear();
-    _dataUltimaCompra = DateTime.now();
+    _quantidadeController.clear();
+    _categoriaSelecionada = null;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Fornecedores x Medicamentos'),
-        backgroundColor: Colors.deepPurple.shade700,
+        title: const Text('Produtos Diversos'),
+        backgroundColor: Colors.amber.shade700,
         foregroundColor: Colors.white,
         actions: [
           IconButton(
@@ -145,23 +124,23 @@ class _FornecedoresMedicamentosState extends State<FornecedoresMedicamentos> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Informações sobre relacionamento N:N
+                  // Informações sobre CRUD simples
                   _buildInfoCard(),
-
+                  
                   const SizedBox(height: 20),
-
-                  // Formulário para criar relacionamento
+                  
+                  // Formulário para adicionar produto
                   _buildFormulario(),
-
+                  
                   const SizedBox(height: 20),
-
-                  // Filtro e estatísticas
-                  _buildFiltroEstatisticas(),
-
+                  
+                  // Filtros e estatísticas
+                  _buildFiltrosEstatisticas(),
+                  
                   const SizedBox(height: 20),
-
-                  // Lista de relacionamentos
-                  _buildListaRelacionamentos(),
+                  
+                  // Lista de produtos
+                  _buildListaProdutos(),
                 ],
               ),
             ),
@@ -170,7 +149,7 @@ class _FornecedoresMedicamentosState extends State<FornecedoresMedicamentos> {
 
   Widget _buildInfoCard() {
     return Card(
-      color: Colors.deepPurple.shade50,
+      color: Colors.amber.shade50,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -178,49 +157,54 @@ class _FornecedoresMedicamentosState extends State<FornecedoresMedicamentos> {
           children: [
             Row(
               children: [
-                Icon(Icons.info, color: Colors.deepPurple.shade700),
+                Icon(Icons.inventory, color: Colors.amber.shade700),
                 const SizedBox(width: 8),
                 Text(
-                  'Relacionamento Muitos-para-Muitos (N:N)',
+                  'Cadastro Simples (CRUD Básico)',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: Colors.deepPurple.shade700,
+                    color: Colors.amber.shade700,
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 12),
             const Text(
-              'Este módulo gerencia o relacionamento entre Distribuidoras e Medicamentos, '
-              'permitindo que uma distribuidora forneça vários medicamentos e um medicamento '
-              'seja fornecido por várias distribuidoras, com preços e datas específicas.',
+              'Este módulo demonstra um CRUD básico sem relacionamentos entre entidades. '
+              'Permite gerenciar produtos diversos como materiais médicos, equipamentos, '
+              'produtos de higiene e outros itens não medicamentosos.',
               style: TextStyle(fontSize: 14),
             ),
             const SizedBox(height: 12),
-            Row(
+            Wrap(
+              spacing: 8,
               children: [
-                _buildStatChip(
-                    'Distribuidoras', _distribuidoras.length, Colors.blue),
-                const SizedBox(width: 8),
-                _buildStatChip(
-                    'Medicamentos', _medicamentos.length, Colors.green),
-                const SizedBox(width: 8),
-                _buildStatChip(
-                    'Relacionamentos', _fornecedores.length, Colors.orange),
+                Chip(
+                  label: Text('CREATE - Criar'),
+                  backgroundColor: Colors.green.withOpacity(0.2),
+                  labelStyle: const TextStyle(color: Colors.green),
+                ),
+                Chip(
+                  label: Text('READ - Ler'),
+                  backgroundColor: Colors.blue.withOpacity(0.2),
+                  labelStyle: const TextStyle(color: Colors.blue),
+                ),
+                Chip(
+                  label: Text('UPDATE - Atualizar'),
+                  backgroundColor: Colors.orange.withOpacity(0.2),
+                  labelStyle: const TextStyle(color: Colors.orange),
+                ),
+                Chip(
+                  label: Text('DELETE - Excluir'),
+                  backgroundColor: Colors.red.withOpacity(0.2),
+                  labelStyle: const TextStyle(color: Colors.red),
+                ),
               ],
             ),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildStatChip(String label, int value, Color color) {
-    return Chip(
-      label: Text('$label: $value'),
-      backgroundColor: color.withOpacity(0.1),
-      labelStyle: TextStyle(color: color, fontWeight: FontWeight.bold),
     );
   }
 
@@ -235,107 +219,128 @@ class _FornecedoresMedicamentosState extends State<FornecedoresMedicamentos> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Criar Novo Relacionamento',
+                'Adicionar Novo Produto',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
-
-              // Dropdown Distribuidora
-              DropdownButtonFormField<Distribuidora>(
-                decoration: const InputDecoration(
-                  labelText: 'Distribuidora',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.business),
-                ),
-                value: _distribuidoraSelecionada,
-                items: _distribuidoras
-                    .map(
-                      (dist) => DropdownMenuItem(
-                        value: dist,
-                        child: Text(dist.nome),
-                      ),
-                    )
-                    .toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _distribuidoraSelecionada = value;
-                  });
-                },
-                validator: (value) =>
-                    value == null ? 'Selecione uma distribuidora' : null,
-              ),
-
-              const SizedBox(height: 12),
-
-              // Dropdown Medicamento
-              DropdownButtonFormField<Medicamento>(
-                decoration: const InputDecoration(
-                  labelText: 'Medicamento',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.medication),
-                ),
-                value: _medicamentoSelecionado,
-                items: _medicamentos
-                    .map(
-                      (med) => DropdownMenuItem(
-                        value: med,
-                        child: Text(
-                            '${med.nome} ${med.doseMg}mg - ${med.laboratorio}'),
-                      ),
-                    )
-                    .toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _medicamentoSelecionado = value;
-                  });
-                },
-                validator: (value) =>
-                    value == null ? 'Selecione um medicamento' : null,
-              ),
-
-              const SizedBox(height: 12),
-
-              // Campo Preço
+              
               TextFormField(
-                controller: _precoController,
+                controller: _nomeController,
                 decoration: const InputDecoration(
-                  labelText: 'Preço (R\$)',
+                  labelText: 'Nome do Produto *',
                   border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.attach_money),
+                  prefixIcon: Icon(Icons.shopping_bag),
                 ),
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value!.isEmpty) return 'Digite o preço';
-                  if (double.tryParse(value) == null) return 'Preço inválido';
-                  return null;
-                },
+                validator: (value) =>
+                    value!.isEmpty ? 'Por favor, insira o nome' : null,
               ),
-
+              
               const SizedBox(height: 12),
-
-              // Campo Data
+              
               TextFormField(
-                decoration: InputDecoration(
-                  labelText: 'Data da Última Compra',
-                  border: const OutlineInputBorder(),
-                  prefixIcon: const Icon(Icons.calendar_today),
-                  suffixIcon: IconButton(
-                    icon: const Icon(Icons.calendar_month),
-                    onPressed: _selecionarData,
+                controller: _descricaoController,
+                decoration: const InputDecoration(
+                  labelText: 'Descrição',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.description),
+                ),
+                maxLines: 2,
+              ),
+              
+              const SizedBox(height: 12),
+              
+              Row(
+                children: [
+                  Expanded(
+                    child: DropdownButtonFormField<String>(
+                      decoration: const InputDecoration(
+                        labelText: 'Categoria Existente',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.category),
+                      ),
+                      value: _categoriaSelecionada,
+                      items: _categorias.where((cat) => cat != 'Todas').map((cat) => 
+                        DropdownMenuItem(value: cat, child: Text(cat))
+                      ).toList()..add(
+                        const DropdownMenuItem(value: null, child: Text('Nova categoria'))
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          _categoriaSelecionada = value;
+                          if (value != null) {
+                            _categoriaController.clear();
+                          }
+                        });
+                      },
+                    ),
                   ),
-                ),
-                readOnly: true,
-                controller: TextEditingController(
-                  text: DateFormat('dd/MM/yyyy').format(_dataUltimaCompra),
-                ),
+                  
+                  if (_categoriaSelecionada == null) ...[
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _categoriaController,
+                        decoration: const InputDecoration(
+                          labelText: 'Nova Categoria *',
+                          border: OutlineInputBorder(),
+                        ),
+                        validator: _categoriaSelecionada == null 
+                          ? (value) => value!.isEmpty ? 'Digite a categoria' : null
+                          : null,
+                      ),
+                    ),
+                  ],
+                ],
               ),
-
+              
+              const SizedBox(height: 12),
+              
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _precoController,
+                      decoration: const InputDecoration(
+                        labelText: 'Preço (R\$) *',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.attach_money),
+                      ),
+                      keyboardType: TextInputType.number,
+                      validator: (value) {
+                        if (value!.isEmpty) return 'Digite o preço';
+                        if (double.tryParse(value) == null) return 'Preço inválido';
+                        return null;
+                      },
+                    ),
+                  ),
+                  
+                  const SizedBox(width: 12),
+                  
+                  Expanded(
+                    child: TextFormField(
+                      controller: _quantidadeController,
+                      decoration: const InputDecoration(
+                        labelText: 'Quantidade *',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.inventory_2),
+                      ),
+                      keyboardType: TextInputType.number,
+                      validator: (value) {
+                        if (value!.isEmpty) return 'Digite a quantidade';
+                        if (int.tryParse(value) == null) return 'Quantidade inválida';
+                        return null;
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              
               const SizedBox(height: 16),
-
+              
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: _isAdding ? null : _adicionarFornecedor,
+                  onPressed: _isAdding ? null : _adicionarProduto,
                   icon: _isAdding
                       ? const SizedBox(
                           width: 16,
@@ -343,10 +348,9 @@ class _FornecedoresMedicamentosState extends State<FornecedoresMedicamentos> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.add),
-                  label:
-                      Text(_isAdding ? 'Criando...' : 'Criar Relacionamento'),
+                  label: Text(_isAdding ? 'Adicionando...' : 'Adicionar Produto'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.deepPurple.shade700,
+                    backgroundColor: Colors.amber.shade700,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
@@ -359,12 +363,11 @@ class _FornecedoresMedicamentosState extends State<FornecedoresMedicamentos> {
     );
   }
 
-  Widget _buildFiltroEstatisticas() {
-    final fornecedoresFiltrados = _aplicarFiltro();
-    final precoMedio = fornecedoresFiltrados.isEmpty
-        ? 0.0
-        : fornecedoresFiltrados.fold<double>(0.0, (sum, f) => sum + f.preco) /
-            fornecedoresFiltrados.length;
+  Widget _buildFiltrosEstatisticas() {
+    final produtosFiltrados = _aplicarFiltros();
+    final valorTotal = produtosFiltrados.fold<double>(
+      0.0, (sum, p) => sum + (p.preco * p.quantidadeEstoque)
+    );
 
     return Card(
       child: Padding(
@@ -372,9 +375,16 @@ class _FornecedoresMedicamentosState extends State<FornecedoresMedicamentos> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const Text(
+              'Filtros e Estatísticas',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            
+            const SizedBox(height: 12),
+            
             TextField(
               decoration: const InputDecoration(
-                labelText: 'Filtrar por distribuidora ou medicamento',
+                labelText: 'Filtrar por nome ou descrição',
                 border: OutlineInputBorder(),
                 prefixIcon: Icon(Icons.search),
               ),
@@ -384,18 +394,34 @@ class _FornecedoresMedicamentosState extends State<FornecedoresMedicamentos> {
                 });
               },
             ),
+            
             const SizedBox(height: 12),
+            
+            DropdownButtonFormField<String>(
+              decoration: const InputDecoration(
+                labelText: 'Filtrar por categoria',
+                border: OutlineInputBorder(),
+              ),
+              value: _filtroCategoria,
+              items: _categorias.map((cat) => 
+                DropdownMenuItem(value: cat, child: Text(cat))
+              ).toList(),
+              onChanged: (value) {
+                setState(() {
+                  _filtroCategoria = value!;
+                });
+              },
+            ),
+            
+            const SizedBox(height: 16),
+            
             Row(
               children: [
-                Expanded(
-                  child: _buildStatCard(
-                      'Total', '${fornecedoresFiltrados.length}', Colors.blue),
-                ),
+                Expanded(child: _buildStatCard('Total Produtos', '${produtosFiltrados.length}', Colors.blue)),
                 const SizedBox(width: 8),
-                Expanded(
-                  child: _buildStatCard('Preço Médio',
-                      'R\$ ${precoMedio.toStringAsFixed(2)}', Colors.green),
-                ),
+                Expanded(child: _buildStatCard('Categorias', '${_categorias.length - 1}', Colors.green)),
+                const SizedBox(width: 8),
+                Expanded(child: _buildStatCard('Valor Total', 'R\$ ${valorTotal.toStringAsFixed(2)}', Colors.orange)),
               ],
             ),
           ],
@@ -417,22 +443,23 @@ class _FornecedoresMedicamentosState extends State<FornecedoresMedicamentos> {
           Text(
             value,
             style: TextStyle(
-              fontSize: 18,
+              fontSize: 16,
               fontWeight: FontWeight.bold,
               color: color,
             ),
           ),
           Text(
             title,
-            style: const TextStyle(fontSize: 12),
+            style: const TextStyle(fontSize: 10),
+            textAlign: TextAlign.center,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildListaRelacionamentos() {
-    final fornecedoresFiltrados = _aplicarFiltro();
+  Widget _buildListaProdutos() {
+    final produtosFiltrados = _aplicarFiltros();
 
     return Card(
       child: Column(
@@ -442,30 +469,31 @@ class _FornecedoresMedicamentosState extends State<FornecedoresMedicamentos> {
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                const Icon(Icons.link, color: Colors.deepPurple),
+                const Icon(Icons.inventory, color: Colors.amber),
                 const SizedBox(width: 8),
                 const Text(
-                  'Relacionamentos Ativos',
+                  'Produtos Cadastrados',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const Spacer(),
                 Text(
-                  '${fornecedoresFiltrados.length} item(ns)',
+                  '${produtosFiltrados.length} item(ns)',
                   style: const TextStyle(color: Colors.grey),
                 ),
               ],
             ),
           ),
-          if (fornecedoresFiltrados.isEmpty)
+          
+          if (produtosFiltrados.isEmpty)
             const Padding(
               padding: EdgeInsets.all(32),
               child: Center(
                 child: Column(
                   children: [
-                    Icon(Icons.link_off, size: 48, color: Colors.grey),
+                    Icon(Icons.inventory_2, size: 48, color: Colors.grey),
                     SizedBox(height: 16),
                     Text(
-                      'Nenhum relacionamento encontrado',
+                      'Nenhum produto encontrado',
                       style: TextStyle(fontSize: 16, color: Colors.grey),
                     ),
                   ],
@@ -476,11 +504,11 @@ class _FornecedoresMedicamentosState extends State<FornecedoresMedicamentos> {
             ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: fornecedoresFiltrados.length,
+              itemCount: produtosFiltrados.length,
               separatorBuilder: (context, index) => const Divider(height: 1),
               itemBuilder: (context, index) {
-                final fornecedor = fornecedoresFiltrados[index];
-                return _buildFornecedorItem(fornecedor);
+                final produto = produtosFiltrados[index];
+                return _buildProdutoItem(produto);
               },
             ),
         ],
@@ -488,31 +516,57 @@ class _FornecedoresMedicamentosState extends State<FornecedoresMedicamentos> {
     );
   }
 
-  Widget _buildFornecedorItem(FornecedorMedicamento fornecedor) {
+  Widget _buildProdutoItem(ProdutoDiverso produto) {
+    final valorTotal = produto.preco * produto.quantidadeEstoque;
+    final estoqueStatus = produto.quantidadeEstoque <= 5 
+        ? 'Crítico' 
+        : produto.quantidadeEstoque <= 20 
+            ? 'Baixo' 
+            : 'Normal';
+    
+    final corEstoque = produto.quantidadeEstoque <= 5 
+        ? Colors.red 
+        : produto.quantidadeEstoque <= 20 
+            ? Colors.orange 
+            : Colors.green;
+
     return ListTile(
       leading: CircleAvatar(
-        backgroundColor: Colors.deepPurple.shade700,
-        child: const Icon(Icons.link, color: Colors.white),
+        backgroundColor: Colors.amber.shade700,
+        child: Text(
+          produto.nome.substring(0, 1).toUpperCase(),
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
       ),
       title: Text(
-        '${fornecedor.distribuidoraNome} ↔ ${fornecedor.medicamentoNome}',
+        produto.nome,
         style: const TextStyle(fontWeight: FontWeight.bold),
       ),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Preço: R\$ ${fornecedor.preco.toStringAsFixed(2)}'),
-          Text(
-            'Última compra: ${DateFormat('dd/MM/yyyy').format(fornecedor.dataUltimaCompra)}',
-          ),
-          Text(
-            'ID: ${fornecedor.id}',
-            style: const TextStyle(fontSize: 12, color: Colors.grey),
+          if (produto.descricao != null)
+            Text(produto.descricao!),
+          Text('Categoria: ${produto.categoria ?? 'Sem categoria'}'),
+          Text('Preço unitário: R\$ ${produto.preco.toStringAsFixed(2)}'),
+          Text('Quantidade: ${produto.quantidadeEstoque}'),
+          Text('Valor total: R\$ ${valorTotal.toStringAsFixed(2)}'),
+          Row(
+            children: [
+              Text('Estoque: '),
+              Text(
+                estoqueStatus,
+                style: TextStyle(
+                  color: corEstoque,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
           ),
         ],
       ),
       trailing: PopupMenuButton<String>(
-        onSelected: (value) => _acaoFornecedor(value, fornecedor),
+        onSelected: (value) => _acaoProduto(value, produto),
         itemBuilder: (context) => [
           const PopupMenuItem(
             value: 'editar',
@@ -521,6 +575,16 @@ class _FornecedoresMedicamentosState extends State<FornecedoresMedicamentos> {
                 Icon(Icons.edit, color: Colors.orange),
                 SizedBox(width: 8),
                 Text('Editar'),
+              ],
+            ),
+          ),
+          const PopupMenuItem(
+            value: 'duplicar',
+            child: Row(
+              children: [
+                Icon(Icons.copy, color: Colors.blue),
+                SizedBox(width: 8),
+                Text('Duplicar'),
               ],
             ),
           ),
@@ -534,75 +598,95 @@ class _FornecedoresMedicamentosState extends State<FornecedoresMedicamentos> {
               ],
             ),
           ),
-          const PopupMenuItem(
-            value: 'historico',
-            child: Row(
-              children: [
-                Icon(Icons.history, color: Colors.blue),
-                SizedBox(width: 8),
-                Text('Histórico'),
-              ],
-            ),
-          ),
         ],
       ),
       isThreeLine: true,
     );
   }
 
-  List<FornecedorMedicamento> _aplicarFiltro() {
-    if (_filtroTexto.isEmpty) return _fornecedores;
+  List<ProdutoDiverso> _aplicarFiltros() {
+    List<ProdutoDiverso> produtosFiltrados = _produtos;
 
-    return _fornecedores.where((f) {
-      final distribuidora = f.distribuidoraNome?.toLowerCase() ?? '';
-      final medicamento = f.medicamentoNome?.toLowerCase() ?? '';
-      final filtro = _filtroTexto.toLowerCase();
-
-      return distribuidora.contains(filtro) || medicamento.contains(filtro);
-    }).toList();
-  }
-
-  Future<void> _selecionarData() async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: _dataUltimaCompra,
-      firstDate: DateTime(2020),
-      lastDate: DateTime.now(),
-    );
-
-    if (picked != null) {
-      setState(() {
-        _dataUltimaCompra = picked;
-      });
+    // Filtro por texto
+    if (_filtroTexto.isNotEmpty) {
+      produtosFiltrados = produtosFiltrados.where((p) {
+        final nome = p.nome.toLowerCase();
+        final descricao = p.descricao?.toLowerCase() ?? '';
+        final filtro = _filtroTexto.toLowerCase();
+        return nome.contains(filtro) || descricao.contains(filtro);
+      }).toList();
     }
+
+    // Filtro por categoria
+    if (_filtroCategoria != 'Todas') {
+      produtosFiltrados = produtosFiltrados.where((p) => 
+        p.categoria == _filtroCategoria
+      ).toList();
+    }
+
+    return produtosFiltrados;
   }
 
-  Future<void> _acaoFornecedor(
-      String acao, FornecedorMedicamento fornecedor) async {
+  Future<void> _acaoProduto(String acao, ProdutoDiverso produto) async {
     switch (acao) {
       case 'editar':
-        _editarFornecedor(fornecedor);
+        _editarProduto(produto);
+        break;
+      case 'duplicar':
+        _duplicarProduto(produto);
         break;
       case 'deletar':
-        _confirmarDelecao(fornecedor);
-        break;
-      case 'historico':
-        _mostrarHistorico(fornecedor);
+        _confirmarDelecao(produto);
         break;
     }
   }
 
-  void _editarFornecedor(FornecedorMedicamento fornecedor) {
-    // Implementar edição
-    _mostrarMensagem('Funcionalidade de edição em desenvolvimento');
+  void _editarProduto(ProdutoDiverso produto) {
+    _nomeController.text = produto.nome;
+    _descricaoController.text = produto.descricao ?? '';
+    _precoController.text = produto.preco.toString();
+    _quantidadeController.text = produto.quantidadeEstoque.toString();
+    
+    if (produto.categoria != null && _categorias.contains(produto.categoria)) {
+      _categoriaSelecionada = produto.categoria;
+      _categoriaController.clear();
+    } else {
+      _categoriaSelecionada = null;
+      _categoriaController.text = produto.categoria ?? '';
+    }
+    
+    // Scroll para o formulário
+    Scrollable.ensureVisible(
+      context,
+      duration: const Duration(milliseconds: 500),
+    );
+    
+    _mostrarMensagem('Dados carregados para edição');
   }
 
-  void _confirmarDelecao(FornecedorMedicamento fornecedor) {
+  void _duplicarProduto(ProdutoDiverso produto) {
+    _nomeController.text = '${produto.nome} (Cópia)';
+    _descricaoController.text = produto.descricao ?? '';
+    _precoController.text = produto.preco.toString();
+    _quantidadeController.text = '0'; // Zerar quantidade na cópia
+    
+    if (produto.categoria != null && _categorias.contains(produto.categoria)) {
+      _categoriaSelecionada = produto.categoria;
+      _categoriaController.clear();
+    } else {
+      _categoriaSelecionada = null;
+      _categoriaController.text = produto.categoria ?? '';
+    }
+    
+    _mostrarMensagem('Produto duplicado no formulário');
+  }
+
+  void _confirmarDelecao(ProdutoDiverso produto) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Confirmar Exclusão'),
-        content: const Text('Deseja realmente excluir este relacionamento?'),
+        content: Text('Deseja realmente excluir o produto "${produto.nome}"?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -611,7 +695,7 @@ class _FornecedoresMedicamentosState extends State<FornecedoresMedicamentos> {
           ElevatedButton(
             onPressed: () {
               Navigator.of(context).pop();
-              _deletarFornecedor(fornecedor);
+              _deletarProduto(produto);
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             child: const Text('Excluir', style: TextStyle(color: Colors.white)),
@@ -621,45 +705,14 @@ class _FornecedoresMedicamentosState extends State<FornecedoresMedicamentos> {
     );
   }
 
-  Future<void> _deletarFornecedor(FornecedorMedicamento fornecedor) async {
+  Future<void> _deletarProduto(ProdutoDiverso produto) async {
     try {
-      await _fornecedorDAO.deleteFornecedorMedicamento(fornecedor.id!);
+      await _produtoDAO.deleteProdutoDiverso(produto.id!);
       await _carregarDados();
-      _mostrarSucesso('Relacionamento excluído com sucesso!');
+      _mostrarSucesso('Produto excluído com sucesso!');
     } catch (e) {
-      _mostrarErro('Erro ao excluir relacionamento: $e');
+      _mostrarErro('Erro ao excluir produto: $e');
     }
-  }
-
-  void _mostrarHistorico(FornecedorMedicamento fornecedor) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Histórico do Relacionamento'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Distribuidora: ${fornecedor.distribuidoraNome}'),
-            Text('Medicamento: ${fornecedor.medicamentoNome}'),
-            Text('Preço Atual: R\$ ${fornecedor.preco.toStringAsFixed(2)}'),
-            Text(
-                'Última Compra: ${DateFormat('dd/MM/yyyy').format(fornecedor.dataUltimaCompra)}'),
-            const SizedBox(height: 16),
-            const Text(
-              'Histórico completo em desenvolvimento...',
-              style: TextStyle(fontStyle: FontStyle.italic),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Fechar'),
-          ),
-        ],
-      ),
-    );
   }
 
   void _mostrarSucesso(String mensagem) {
