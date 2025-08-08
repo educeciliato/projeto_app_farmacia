@@ -9,7 +9,6 @@ environment:
   sdk: '>=3.0.0 <4.0.0'
 
 dependencies:
-  google_fonts: ^6.1.0
   flutter:
     sdk: flutter
   
@@ -18,61 +17,60 @@ dependencies:
   
   # Banco de dados
   sqflite: ^2.3.0
-  sqflite_common_ffi: ^2.3.0+4
+  path: ^1.8.3
   
-  # UUID
+  # UUID e Utilities
   uuid: ^4.2.1
+  intl: ^0.20.2
+  shared_preferences: ^2.2.2
   
-  # Internacionalização
-  intl: ^0.19.0
+  # UI
+  google_fonts: ^6.1.0
   
-  # HTTP para APIs
+  # HTTP para APIs (versões compatíveis)
   http: ^1.1.2
   dio: ^5.4.0
   
-  # Notificações
-  flutter_local_notifications: ^16.3.2
+  # Notificações (sem Firebase por enquanto)
+  flutter_local_notifications: ^19.4.0
   
   # Launcher para apps externos
   url_launcher: ^6.2.2
   
   # Gráficos
-  fl_chart: ^0.65.0
+  fl_chart: ^1.0.0
   
   # Geolocalização
-  geolocator: ^10.1.0
-  permission_handler: ^11.2.0
+  geolocator: ^8.2.1
+  permission_handler: ^12.0.1
+  sqflite_common_ffi: ^2.3.6
   
-  # Mapas
-  google_maps_flutter: ^2.5.3
+  # Mapas (comentado até resolver Firebase)
+  # google_maps_flutter: ^2.5.3
   
-  # Câmera
-  camera: ^0.10.5+9
-  
-  # Firebase
-  firebase_core: ^2.24.2
-  cloud_firestore: ^4.14.0
-  firebase_messaging: ^14.7.10
-  firebase_storage: ^11.6.0
-  
-  # Utilities
-  path: ^1.8.3
-  shared_preferences: ^2.2.2
+  # Câmera (comentado até resolver Firebase)
+  # camera: ^0.10.5+9
+
+# Firebase - Temporariamente removido para evitar conflitos
+# Descomente quando configurar adequadamente
+# dependencies:
+#   firebase_core: ^2.24.2
+#   cloud_firestore: ^4.14.0
+#   firebase_messaging: ^14.7.10
+#   firebase_storage: ^11.6.0
+
+# Força resolução de conflitos se necessário
+dependency_overrides:
+  web: ^0.5.1
+  js: ^0.7.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^3.0.0
+  flutter_lints: ^6.0.0
 
 flutter:
   uses-material-design: true
   
   assets:
     - assets/images/
-    
-  fonts:
-    - family: Roboto
-      fonts:
-        - asset: fonts/Roboto-Regular.ttf
-        - asset: fonts/Roboto-Bold.ttf
-          weight: 700
