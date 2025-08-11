@@ -1,76 +1,66 @@
 name: app_farmacia
 description: Sistema de Controle de Estoque para Farmácia
 
-publish_to: 'none'
+publish_to: "none"
 
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.0.0 <4.0.0'
+  sdk: ">=3.0.0 <4.0.0"
 
 dependencies:
   flutter:
     sdk: flutter
-  
+
   # Estado e Provider
-  provider: ^6.1.1
-  
+  provider: ^6.1.5
+
   # Banco de dados
-  sqflite: ^2.3.0
-  path: ^1.8.3
-  
-  # UUID e Utilities
-  uuid: ^4.2.1
-  intl: ^0.20.2
-  shared_preferences: ^2.2.2
-  
-  # UI
-  google_fonts: ^6.1.0
-  
-  # HTTP para APIs (versões compatíveis)
-  http: ^1.1.2
-  dio: ^5.4.0
-  
-  # Notificações (sem Firebase por enquanto)
-  flutter_local_notifications: ^19.4.0
-  
-  # Launcher para apps externos
-  url_launcher: ^6.2.2
-  
-  # Gráficos
-  fl_chart: ^1.0.0
-  
-  # Geolocalização
-  geolocator: ^8.2.1
-  permission_handler: ^12.0.1
+  sqflite: ^2.4.2
   sqflite_common_ffi: ^2.3.6
-  
-  # Mapas (comentado até resolver Firebase)
-  # google_maps_flutter: ^2.5.3
-  
-  # Câmera (comentado até resolver Firebase)
-  # camera: ^0.10.5+9
+  # IMPORTANTE: Adicione esta dependência para suporte web
+  sqflite_common_ffi_web: ^0.4.3
+  path: ^1.9.1
 
-# Firebase - Temporariamente removido para evitar conflitos
-# Descomente quando configurar adequadamente
-# dependencies:
-#   firebase_core: ^2.24.2
-#   cloud_firestore: ^4.14.0
-#   firebase_messaging: ^14.7.10
-#   firebase_storage: ^11.6.0
+  # UUID e Utilities
+  uuid: ^4.5.1
+  intl: ^0.19.0
+  shared_preferences: ^2.5.3
 
-# Força resolução de conflitos se necessário
-dependency_overrides:
-  web: ^0.5.1
-  js: ^0.7.1
+  # UI
+  google_fonts: ^6.3.0
+
+  # HTTP para APIs
+  http: ^1.4.0
+  dio: ^5.9.0
+
+  # Notificações
+  flutter_local_notifications: ^16.3.3
+
+  # Launcher para apps externos
+  url_launcher: ^6.3.2
+
+  # Gráficos
+  fl_chart: ^0.65.0
+
+  # Geolocalização
+  geolocator: ^10.1.1
+  permission_handler: ^11.4.0
+
+  # Mapas e câmera (reativados)
+  google_maps_flutter: ^2.12.3
+  camera: ^0.10.6
+
+  # Firebase (reativado)
+  firebase_core: ^2.32.0
+  cloud_firestore: ^4.17.5
+  firebase_messaging: ^14.7.10
+  firebase_storage: ^11.6.5
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^6.0.0
+  flutter_lints: ^3.0.2
 
 flutter:
   uses-material-design: true
-  
-  assets:
-    - assets/images/
