@@ -1,66 +1,26 @@
-name: app_farmacia
-description: Sistema de Controle de Estoque para Farmácia
-
-publish_to: "none"
-
+name: controle_estoque
+description: Sistema de controle de estoque para farmácia
 version: 1.0.0+1
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
+  flutter: ">=3.10.0"
 
 dependencies:
   flutter:
     sdk: flutter
-
-  # Estado e Provider
-  provider: ^6.1.5
-
-  # Banco de dados
-  sqflite: ^2.4.2
-  sqflite_common_ffi: ^2.3.6
-  # IMPORTANTE: Adicione esta dependência para suporte web
-  sqflite_common_ffi_web: ^0.4.3
-  path: ^1.9.1
-
-  # UUID e Utilities
-  uuid: ^4.5.1
-  intl: ^0.19.0
-  shared_preferences: ^2.5.3
-
-  # UI
-  google_fonts: ^6.3.0
-
-  # HTTP para APIs
-  http: ^1.4.0
-  dio: ^5.9.0
-
-  # Notificações
-  flutter_local_notifications: ^16.3.3
-
-  # Launcher para apps externos
-  url_launcher: ^6.3.2
-
-  # Gráficos
-  fl_chart: ^0.65.0
-
-  # Geolocalização
-  geolocator: ^10.1.1
-  permission_handler: ^11.4.0
-
-  # Mapas e câmera (reativados)
-  google_maps_flutter: ^2.12.3
-  camera: ^0.10.6
-
-  # Firebase (reativado)
-  firebase_core: ^2.32.0
-  cloud_firestore: ^4.17.5
-  firebase_messaging: ^14.7.10
-  firebase_storage: ^11.6.5
+  provider: ^6.1.1
+  sqflite: ^2.3.0
+  sqflite_common_ffi: ^2.3.0+4
+  path: ^1.8.3
+  uuid: ^4.1.0
+  intl: ^0.18.1
+  cupertino_icons: ^1.0.2
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^3.0.2
+  flutter_lints: ^3.0.0
 
 flutter:
   uses-material-design: true
