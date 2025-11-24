@@ -2,8 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 import 'package:controle_estoque/model/medicamento.dart';
 import 'package:controle_estoque/model/laboratorio.dart';
+import '../dao/medicamento_dao.dart';
+import '../dao/laboratorio_dao.dart';
 
 class MedicamentoProvider with ChangeNotifier {
+  final MedicamentoDAO _medicamentoDAO = MedicamentoDAO();
+  final LaboratorioDAO _laboratorioDAO = LaboratorioDAO();
   List<Medicamento> _medicamentos = [];
   List<Laboratorio> _laboratorios = [];
   bool _isLoading = false;
@@ -23,6 +27,8 @@ class MedicamentoProvider with ChangeNotifier {
       // Se não houver medicamentos, adiciona dados de exemplo
       if (_medicamentos.isEmpty) {
         await _addExampleData();
+        // Recarrega os medicamentos após adicionar os dados de exemplo
+        await _loadMedicamentos();
       }
     } catch (e) {
       debugPrint('Erro ao inicializar dados: $e');
@@ -34,8 +40,7 @@ class MedicamentoProvider with ChangeNotifier {
 
   Future<void> _loadMedicamentos() async {
     try {
-      // Para web, vamos simular dados em memória
-      // Em um app real, você carregaria do banco
+      _medicamentos = await _medicamentoDAO.getAllMedicamentos();
       notifyListeners();
     } catch (e) {
       debugPrint('Erro ao carregar medicamentos: $e');
@@ -44,12 +49,7 @@ class MedicamentoProvider with ChangeNotifier {
 
   Future<void> _loadLaboratorios() async {
     try {
-      // Laboratorios de exemplo
-      _laboratorios = [
-        Laboratorio(id: 1, nome: 'EMS'),
-        Laboratorio(id: 2, nome: 'Medley'),
-        Laboratorio(id: 3, nome: 'Sanofi'),
-      ];
+      _laboratorios = await _laboratorioDAO.getAllLaboratorios();
       notifyListeners();
     } catch (e) {
       debugPrint('Erro ao carregar laboratorios: $e');
@@ -59,20 +59,27 @@ class MedicamentoProvider with ChangeNotifier {
   Future<void> adicionarMedicamento(
       Medicamento medicamento, String nomeLaboratorio) async {
     try {
-      // Busca ou cria laboratorio
+      // Busca o laboratório pelo nome no banco de dados
       Laboratorio? laboratorio =
-          _laboratorios.where((lab) => lab.nome == nomeLaboratorio).firstOrNull;
+          await _laboratorioDAO.getLaboratorioByNome(nomeLaboratorio);
 
       if (laboratorio == null) {
-        laboratorio = Laboratorio(
-          id: _laboratorios.length + 1,
-          nome: nomeLaboratorio,
-        );
-        _laboratorios.add(laboratorio);
+        // Se não existir, adiciona o laboratório ao banco de dados
+        laboratorio = Laboratorio(nome: nomeLaboratorio);
+        await _laboratorioDAO.insertLaboratorio(laboratorio);
+        // Recarrega os laboratórios para obter o ID gerado
+        await _loadLaboratorios();
+        laboratorio = await _laboratorioDAO.getLaboratorioByNome(nomeLaboratorio);
       }
 
-      _medicamentos.add(medicamento);
-      notifyListeners();
+      if (laboratorio != null) {
+        // Adiciona o medicamento ao banco de dados
+        await _medicamentoDAO.insertMedicamento(medicamento, laboratorio.id!);
+        // Recarrega a lista de medicamentos
+        await _loadMedicamentos();
+      } else {
+        debugPrint('Erro: Laboratório não encontrado ou não pôde ser criado.');
+      }
     } catch (e) {
       debugPrint('Erro ao adicionar medicamento: $e');
       rethrow;
@@ -82,10 +89,10 @@ class MedicamentoProvider with ChangeNotifier {
   Future<void> removerMedicamentos(
       List<Medicamento> medicamentosParaRemover) async {
     try {
-      for (var med in medicamentosParaRemover) {
-        _medicamentos.removeWhere((m) => m.id == med.id);
-      }
-      notifyListeners();
+      final List<String> idsParaRemover =
+          medicamentosParaRemover.map((m) => m.id).toList();
+      await _medicamentoDAO.deleteMedicamentos(idsParaRemover);
+      await _loadMedicamentos();
     } catch (e) {
       debugPrint('Erro ao remover medicamentos: $e');
       rethrow;
@@ -95,10 +102,15 @@ class MedicamentoProvider with ChangeNotifier {
   Future<void> atualizarMedicamento(
       Medicamento medicamento, String nomeLaboratorio) async {
     try {
-      int index = _medicamentos.indexWhere((m) => m.id == medicamento.id);
-      if (index != -1) {
-        _medicamentos[index] = medicamento;
-        notifyListeners();
+      // Busca o laboratório pelo nome no banco de dados
+      Laboratorio? laboratorio =
+          await _laboratorioDAO.getLaboratorioByNome(nomeLaboratorio);
+
+      if (laboratorio != null) {
+        await _medicamentoDAO.updateMedicamento(medicamento, laboratorio.id!);
+        await _loadMedicamentos();
+      } else {
+        debugPrint('Erro: Laboratório não encontrado.');
       }
     } catch (e) {
       debugPrint('Erro ao atualizar medicamento: $e');
@@ -151,8 +163,14 @@ class MedicamentoProvider with ChangeNotifier {
         ),
       ];
 
-      _medicamentos.addAll(medicamentosExemplo);
-      notifyListeners();
+      for (var med in medicamentosExemplo) {
+        // Para os dados de exemplo, vamos assumir que o laboratório já existe no banco
+        Laboratorio? laboratorio =
+            await _laboratorioDAO.getLaboratorioByNome(med.laboratorio);
+        if (laboratorio != null) {
+          await _medicamentoDAO.insertMedicamento(med, laboratorio.id!);
+        }
+      }
     } catch (e) {
       debugPrint('Erro ao adicionar dados de exemplo: $e');
     }
@@ -168,9 +186,8 @@ class MedicamentoProvider with ChangeNotifier {
 
   Future<void> adicionarLaboratorio(Laboratorio laboratorio) async {
     try {
-      laboratorio.id = _laboratorios.length + 1;
-      _laboratorios.add(laboratorio);
-      notifyListeners();
+      await _laboratorioDAO.insertLaboratorio(laboratorio);
+      await _loadLaboratorios();
     } catch (e) {
       debugPrint('Erro ao adicionar laboratorio: $e');
       rethrow;
@@ -178,13 +195,4 @@ class MedicamentoProvider with ChangeNotifier {
   }
 }
 
-// Extension para firstOrNull (caso não esteja disponível)
-extension IterableExtension<T> on Iterable<T> {
-  T? get firstOrNull {
-    final iterator = this.iterator;
-    if (iterator.moveNext()) {
-      return iterator.current;
-    }
-    return null;
-  }
-}
+
